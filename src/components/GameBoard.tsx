@@ -130,7 +130,7 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
             return (
               <div 
                 key={placeholder.id}
-                className={`h-80 w-36 rounded-lg overflow-hidden flex items-center justify-center ${
+                className={`h-52 w-36 rounded-lg overflow-hidden flex items-center justify-center ${
                   character ? 'cursor-pointer' : 'border-2 border-dashed border-white/30'
                 }`}
                 onClick={() => character && handleRemoveCharacter(character.id)}
@@ -157,19 +157,21 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
 
       {/* Character selection area */}
       <div className="bg-black/50 backdrop-blur-md p-4">
-        <h2 className="text-xl font-bold text-white mb-3">Available Characters</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+        <h2 className="text-xl font-bold text-white mb-3 text-center">Available Characters</h2>
+        <div className="flex justify-center flex-wrap gap-3 max-w-4xl mx-auto">
           {base.characters.map((character) => (
             <div 
               key={character.id}
-              className="aspect-square bg-white/10 rounded-lg overflow-hidden cursor-pointer hover:bg-white/20 transition-colors"
+              className="w-24 h-32 bg-white/10 rounded-lg overflow-hidden cursor-pointer hover:bg-white/20 transition-colors"
               onClick={() => handleAddCharacter(character)}
             >
-              <img 
-                src={character.image} 
-                alt={character.name}
-                className="w-full h-full object-contain p-2"
-              />
+              <div className="h-24 flex items-center justify-center">
+                <img 
+                  src={character.image} 
+                  alt={character.name}
+                  className="h-full object-contain"
+                />
+              </div>
               <div className="bg-black/70 p-1 text-white text-xs text-center truncate">
                 {character.name}
               </div>
