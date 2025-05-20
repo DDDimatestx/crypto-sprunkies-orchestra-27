@@ -21,14 +21,14 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
     isPlaying 
   } = useAudioSynchronizer();
   
-  // Set up the placeholders for the main game area
-  const placeholders = Array(8).fill(null).map((_, index) => ({
+  // Set up the placeholders for the main game area - reduced to 4
+  const placeholders = Array(4).fill(null).map((_, index) => ({
     id: `placeholder-${index}`,
     position: index
   }));
 
   const handleAddCharacter = (character: Character) => {
-    if (activeCharacters.length >= 8) {
+    if (activeCharacters.length >= 4) {
       toast("Maximum characters reached! Remove some before adding more.");
       return;
     }
@@ -94,7 +94,7 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
             onClick={onBackToMenu}
             className="text-white border-white/50 hover:bg-white/10"
           >
-            ← Back to Bases
+            ← Back to Menu
           </Button>
           <h1 className="text-2xl font-bold text-white">{base.name}</h1>
         </div>
@@ -121,16 +121,16 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
 
       {/* Main game area */}
       <div 
-        className="flex-1 p-6 bg-center bg-cover"
+        className="flex-1 p-6 bg-center bg-cover flex flex-col justify-end"
         style={{ backgroundImage: `url(${base.background})` }}
       >
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto">
+        <div className="flex justify-center gap-4 mb-4">
           {placeholders.map((placeholder) => {
             const character = activeCharacters.find(c => c.position === placeholder.position);
             return (
               <div 
                 key={placeholder.id}
-                className={`aspect-square rounded-lg overflow-hidden flex items-center justify-center ${
+                className={`h-80 w-36 rounded-lg overflow-hidden flex items-center justify-center ${
                   character ? 'cursor-pointer' : 'border-2 border-dashed border-white/30'
                 }`}
                 onClick={() => character && handleRemoveCharacter(character.id)}

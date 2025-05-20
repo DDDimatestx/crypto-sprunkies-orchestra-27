@@ -4,6 +4,7 @@ export interface Character {
   name: string;
   image: string;
   audioTrack: string;
+  position?: number;
 }
 
 export interface Base {
