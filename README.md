@@ -1,73 +1,87 @@
-# Welcome to your Lovable project
 
-## Project info
+# CryptoSprunks
 
-**URL**: https://lovable.dev/projects/3de021e6-6e27-4c56-a047-ae181dcab5e4
+CryptoSprunks is a musical mixing game where users can select animated characters that each play a unique musical stem, creating synchronized musical compositions.
 
-## How can I edit this code?
+## How to Populate Content
 
-There are several ways of editing your application.
+### File Structure
 
-**Use Lovable**
+The application expects content in the following folders:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3de021e6-6e27-4c56-a047-ae181dcab5e4) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+public/
+  ├── backgrounds/
+  │   ├── base-1-bg.jpg
+  │   ├── base-2-bg.jpg
+  │   └── ...
+  ├── characters/
+  │   ├── base-1/
+  │   │   ├── character-1.gif
+  │   │   ├── character-2.gif
+  │   │   └── ...
+  │   ├── base-2/
+  │   │   └── ...
+  └── audio/
+      ├── base-1/
+      │   ├── drum.mp3
+      │   ├── synth.mp3
+      │   └── ...
+      ├── base-2/
+      │   └── ...
 ```
 
-**Edit a file directly in GitHub**
+### Character Requirements
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. **File Format**: GIF or APNG (Animated PNG) is recommended for animated characters
+   - GIF is widely supported but has limited color depth
+   - APNG provides better quality but slightly less compatibility
+   - WebP animations are another modern option with good compression
 
-**Use GitHub Codespaces**
+2. **Size**: Recommended size is 200x200 pixels or higher, but keep file size under 500KB for performance
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+3. **Background**: Transparent background is recommended
 
-## What technologies are used for this project?
+### Audio Requirements
 
-This project is built with:
+1. **File Format**: MP3 or OGG format
+   - MP3 for better compatibility
+   - OGG for better quality-to-size ratio
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+2. **Duration**: All audio stems within a base must have the exact same duration
 
-## How can I deploy this project?
+3. **Loop Points**: Audio should be designed to loop seamlessly
 
-Simply open [Lovable](https://lovable.dev/projects/3de021e6-6e27-4c56-a047-ae181dcab5e4) and click on Share -> Publish.
+4. **Synchronization**: All stems should be precisely beat-matched and phase-aligned
 
-## Can I connect a custom domain to my Lovable project?
+### How to Add New Bases
 
-Yes, you can!
+1. Add the required files to the appropriate directories
+2. Update the `mockBases.ts` file in `src/data` with your new base information:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```typescript
+{
+  id: 'your-base-id',
+  name: 'Your Base Name',
+  background: '/backgrounds/your-base-bg.jpg',
+  characters: [
+    {
+      id: 'your-char-1',
+      name: 'Character Name',
+      image: '/characters/your-base-id/character-1.gif',
+      audioTrack: '/audio/your-base-id/instrument.mp3',
+    },
+    // Add more characters
+  ]
+}
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## Important Tips
+
+1. **Audio Synchronization**: For best results, create your audio stems from the same source track to ensure perfect synchronization
+
+2. **File Optimization**:
+   - Compress GIF files using tools like ezgif.com
+   - Optimize audio files to balance quality and file size
+
+3. **Testing**: Always test new content in the application before final deployment
