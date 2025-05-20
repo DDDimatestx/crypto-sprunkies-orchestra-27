@@ -4,6 +4,7 @@ import { Character, Base } from '../types';
 import { Button } from '@/components/ui/button';
 import { useAudioSynchronizer } from '../hooks/useAudioSynchronizer';
 import { toast } from '@/components/ui/sonner';
+import { Mic } from 'lucide-react';
 
 interface GameBoardProps {
   base: Base;
@@ -130,8 +131,8 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
             return (
               <div 
                 key={placeholder.id}
-                className={`h-52 w-36 rounded-lg overflow-hidden flex items-center justify-center ${
-                  character ? 'cursor-pointer' : 'border-2 border-dashed border-white/30'
+                className={`h-36 w-24 rounded-lg overflow-hidden flex items-center justify-center ${
+                  character ? 'cursor-pointer' : 'bg-black/20 border border-white/20'
                 }`}
                 onClick={() => character && handleRemoveCharacter(character.id)}
               >
@@ -147,7 +148,9 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-white/40 text-center">Empty</div>
+                  <div className="text-white/50 flex flex-col items-center justify-center">
+                    <Mic className="h-10 w-10 mb-1" />
+                  </div>
                 )}
               </div>
             );
