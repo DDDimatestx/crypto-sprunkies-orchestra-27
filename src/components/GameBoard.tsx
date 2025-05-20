@@ -131,7 +131,7 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
             return (
               <div 
                 key={placeholder.id}
-                className={`h-36 w-24 rounded-lg overflow-hidden flex items-center justify-center ${
+                className={`h-72 w-48 rounded-lg overflow-hidden flex items-center justify-center ${
                   character ? 'cursor-pointer' : 'bg-black/20 border border-white/20'
                 }`}
                 onClick={() => character && handleRemoveCharacter(character.id)}
@@ -149,7 +149,7 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
                   </div>
                 ) : (
                   <div className="text-white/50 flex flex-col items-center justify-center">
-                    <Mic className="h-10 w-10 mb-1" />
+                    <Mic className="h-20 w-20 mb-2" />
                   </div>
                 )}
               </div>
