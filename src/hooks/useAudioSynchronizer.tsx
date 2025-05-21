@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { Character } from '../types';
 import { toast } from '@/components/ui/sonner';
@@ -98,10 +97,11 @@ export function useAudioSynchronizer() {
     audio.addEventListener('canplaythrough', () => {
       console.log('Audio loaded and ready to play for', character.name);
       
-      // Add track to state
-      setTracks(prev => [...prev, { character, audio, isPlaying: true }]);
+      // Add track to state WITHOUT stopping other tracks
+      const newTrack = { character, audio, isPlaying: true };
+      setTracks(prev => [...prev, newTrack]);
       
-      // Start playing
+      // Start playing this track independently
       playAudio(audio)
         .then(() => {
           console.log('Started playing audio for', character.name);
@@ -141,6 +141,7 @@ export function useAudioSynchronizer() {
       }
     }
     
+    // Remove only this specific track, keep others playing
     setTracks(prev => prev.filter(t => t.character.id !== characterId));
   };
   
