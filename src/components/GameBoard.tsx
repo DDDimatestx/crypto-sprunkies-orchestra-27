@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { Character, Base } from '../types';
 import { Button } from '@/components/ui/button';
 import { useAudioSynchronizer } from '../hooks/useAudioSynchronizer';
 import { toast } from '@/components/ui/sonner';
-import { Mic } from 'lucide-react';
+import { Mic, Volume2 } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 
 interface GameBoardProps {
   base: Base;
@@ -13,20 +13,25 @@ interface GameBoardProps {
 
 const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
   const [activeCharacters, setActiveCharacters] = useState<Character[]>([]);
-  const [started, setStarted] = useState(false);
+  const [volume, setVolume] = useState([0.7]); // Default volume at 70%
   const { 
     addTrack, 
-    removeTrack, 
-    startAll, 
-    stopAll, 
-    isPlaying 
+    removeTrack
   } = useAudioSynchronizer();
   
-  // Set up the placeholders for the main game area - reduced to 4
+  // Set up the placeholders for the main game area - keep at 4
   const placeholders = Array(4).fill(null).map((_, index) => ({
     id: `placeholder-${index}`,
     position: index
   }));
+
+  // Apply volume changes to all audio elements
+  useEffect(() => {
+    const audioElements = document.querySelectorAll('audio');
+    audioElements.forEach((audio) => {
+      audio.volume = volume[0];
+    });
+  }, [volume]);
 
   const handleAddCharacter = (character: Character) => {
     if (activeCharacters.length >= 4) {
@@ -47,47 +52,28 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
     };
     
     setActiveCharacters(prev => [...prev, characterWithPosition]);
-    addTrack(character);
     
-    if (started && !isPlaying) {
-      startAll();
-    }
+    // Start playing this character's audio immediately when added
+    addTrack(character);
   };
 
   const handleRemoveCharacter = (characterId: string) => {
     setActiveCharacters(prev => prev.filter(c => c.id !== characterId));
     removeTrack(characterId);
-    
-    if (activeCharacters.length === 1) {
-      stopAll();
-      setStarted(false);
-    }
   };
 
-  const handleStartMusic = () => {
-    if (activeCharacters.length === 0) {
-      toast("Add some characters first!");
-      return;
-    }
-    
-    setStarted(true);
-    startAll();
-  };
-
-  const handleStopMusic = () => {
-    stopAll();
-    setStarted(false);
-  };
-
+  // Clean up audio on component unmount
   useEffect(() => {
     return () => {
-      stopAll();
+      activeCharacters.forEach(character => {
+        removeTrack(character.id);
+      });
     };
   }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-purple-900 to-indigo-800">
-      {/* Header with back button and controls */}
+      {/* Header with back button and volume control */}
       <div className="bg-black/30 backdrop-blur-md p-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
           <Button 
@@ -100,23 +86,15 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
           <h1 className="text-2xl font-bold text-white">{base.name}</h1>
         </div>
         
-        <div className="flex items-center gap-2">
-          {!started ? (
-            <Button 
-              onClick={handleStartMusic}
-              disabled={activeCharacters.length === 0}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              Play
-            </Button>
-          ) : (
-            <Button 
-              onClick={handleStopMusic}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Stop
-            </Button>
-          )}
+        <div className="flex items-center gap-3 w-48">
+          <Volume2 className="text-white" size={20} />
+          <Slider
+            className="w-full"
+            value={volume}
+            onValueChange={setVolume}
+            max={1}
+            step={0.01}
+          />
         </div>
       </div>
 
@@ -131,7 +109,7 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
             return (
               <div 
                 key={placeholder.id}
-                className={`h-72 w-48 rounded-lg overflow-hidden flex items-center justify-center ${
+                className={`h-80 w-60 rounded-lg overflow-hidden flex items-center justify-center ${
                   character ? 'cursor-pointer' : 'bg-black/20 border border-white/20'
                 }`}
                 onClick={() => character && handleRemoveCharacter(character.id)}
@@ -141,7 +119,7 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
                     <img 
                       src={character.image} 
                       alt={character.name}
-                      className={`w-full h-full object-contain ${started ? 'float-animation' : ''}`}
+                      className="w-full h-full object-contain float-animation"
                     />
                     <div className="absolute bottom-1 left-1 right-1 bg-black/60 text-white text-xs p-1 rounded text-center">
                       Click to remove
@@ -149,7 +127,7 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
                   </div>
                 ) : (
                   <div className="text-white/50 flex flex-col items-center justify-center">
-                    <Mic className="h-20 w-20 mb-2" />
+                    <Mic className="h-32 w-32 mb-2" />
                   </div>
                 )}
               </div>
@@ -158,10 +136,10 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
         </div>
       </div>
 
-      {/* Character selection area */}
+      {/* Character selection area - now showing 6 characters */}
       <div className="bg-black/50 backdrop-blur-md p-4">
         <h2 className="text-xl font-bold text-white mb-3 text-center">Available Characters</h2>
-        <div className="flex justify-center flex-wrap gap-3 max-w-4xl mx-auto">
+        <div className="flex justify-center flex-wrap gap-3 max-w-5xl mx-auto">
           {base.characters.map((character) => (
             <div 
               key={character.id}

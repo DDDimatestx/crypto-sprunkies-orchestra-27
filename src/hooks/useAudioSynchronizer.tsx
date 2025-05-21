@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { Character } from '../types';
 
@@ -15,7 +14,7 @@ export function useAudioSynchronizer() {
   const rafIdRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
   
-  // Добавим debug-логи для отслеживания проблем с аудио
+  // Add track and start playing immediately
   const addTrack = (character: Character) => {
     console.log('Adding track for character:', character.name, 'with audio:', character.audioTrack);
     
@@ -25,9 +24,9 @@ export function useAudioSynchronizer() {
     }
     
     const audio = new Audio(character.audioTrack);
-    audio.loop = true;
+    audio.loop = true; // Set looping enabled for continuous playback
     
-    // Добавим обработчики для отладки
+    // Add event listeners for debugging
     audio.addEventListener('error', (e) => {
       console.error('Audio error for', character.name, ':', e);
     });
@@ -36,10 +35,14 @@ export function useAudioSynchronizer() {
       console.log('Audio loaded and can play through for', character.name);
     });
     
+    audio.addEventListener('ended', () => {
+      console.log('Audio ended for', character.name, '- should loop automatically');
+    });
+    
     audio.addEventListener('loadedmetadata', () => {
       console.log('Audio metadata loaded for', character.name, 'duration:', audio.duration);
       
-      // Если это первый трек, устанавливаем длину цикла
+      // Set loop length if this is the first track
       if (loopLengthRef.current === 0) {
         loopLengthRef.current = audio.duration;
         console.log('Set loop length to', loopLengthRef.current);
@@ -50,33 +53,39 @@ export function useAudioSynchronizer() {
         { character, audio, isPlaying: false }
       ]);
       
-      // Если у нас уже есть воспроизводящиеся треки, синхронизируем этот
-      if (tracks.some(t => t.isPlaying)) {
-        const currentTime = (performance.now() - startTimeRef.current) / 1000 % loopLengthRef.current;
-        audio.currentTime = currentTime;
-        audio.play().catch(err => console.error('Error playing audio:', err));
-      }
+      // Start playing immediately
+      audio.play().then(() => {
+        console.log('Started playing', character.name);
+        setTracks(prev => 
+          prev.map(track => 
+            track.character.id === character.id 
+              ? { ...track, isPlaying: true } 
+              : track
+          )
+        );
+      }).catch(err => {
+        console.error('Error playing audio for', character.name, ':', err);
+      });
     });
   };
   
-  // Удаление трека
+  // Remove track and stop its audio
   const removeTrack = (characterId: string) => {
     console.log('Removing track for character ID:', characterId);
     
-    setTracks(prev => {
-      const newTracks = prev.filter(t => t.character.id !== characterId);
-      const trackToRemove = prev.find(t => t.character.id === characterId);
-      
-      if (trackToRemove) {
-        trackToRemove.audio.pause();
-        trackToRemove.audio.src = '';
-      }
-      
-      return newTracks;
-    });
+    const trackToRemove = tracks.find(t => t.character.id === characterId);
+    if (trackToRemove) {
+      // Pause and reset the audio before removing
+      trackToRemove.audio.pause();
+      trackToRemove.audio.currentTime = 0;
+      trackToRemove.audio.src = '';
+      console.log('Stopped audio for', trackToRemove.character.name);
+    }
+    
+    setTracks(prev => prev.filter(t => t.character.id !== characterId));
   };
   
-  // Запуск всех треков синхронно
+  // Start all tracks (not needed anymore as we auto-start, but keeping for API compatibility)
   const startAll = () => {
     console.log('Starting all tracks, count:', tracks.length);
     
@@ -85,41 +94,34 @@ export function useAudioSynchronizer() {
       return;
     }
     
-    // Сбрасываем время цикла и устанавливаем ссылку на время начала
+    // Reset cycle time and set start time reference
     cycleTimeRef.current = 0;
     startTimeRef.current = performance.now();
     
-    // Запускаем все треки с начала
-    const playPromises = tracks.map(track => {
+    // Start all tracks from beginning
+    tracks.forEach(track => {
       console.log('Starting track for', track.character.name);
       track.audio.currentTime = 0;
-      return track.audio.play().catch(err => {
+      track.audio.play().catch(err => {
         console.error('Error playing', track.character.name, ':', err);
       });
     });
     
-    // Обновляем состояние треков, чтобы отразить, что они воспроизводятся
+    // Update track state to reflect that they're playing
     setTracks(prev => 
       prev.map(track => ({ ...track, isPlaying: true }))
     );
     
-    // Запускаем анимационный фрейм для отслеживания времени цикла
+    // Start animation frame for tracking cycle time
     const animate = (time: number) => {
       cycleTimeRef.current = (time - startTimeRef.current) / 1000 % loopLengthRef.current;
       rafIdRef.current = requestAnimationFrame(animate);
     };
     
     rafIdRef.current = requestAnimationFrame(animate);
-    
-    // Проверка статуса после запуска
-    Promise.all(playPromises).then(() => {
-      console.log('All tracks started successfully');
-    }).catch(err => {
-      console.error('Error starting tracks:', err);
-    });
   };
   
-  // Остановка всех треков
+  // Stop all tracks (kept for API compatibility)
   const stopAll = () => {
     console.log('Stopping all tracks');
     
@@ -130,6 +132,7 @@ export function useAudioSynchronizer() {
     
     tracks.forEach(track => {
       track.audio.pause();
+      track.audio.currentTime = 0;
     });
     
     setTracks(prev => 
@@ -137,7 +140,14 @@ export function useAudioSynchronizer() {
     );
   };
   
-  // Очистка при размонтировании
+  // Set volume for all audio tracks
+  const setVolume = (volume: number) => {
+    tracks.forEach(track => {
+      track.audio.volume = volume;
+    });
+  };
+  
+  // Clean up when component unmounts
   useEffect(() => {
     return () => {
       console.log('Cleaning up audio synchronizer');
@@ -146,22 +156,32 @@ export function useAudioSynchronizer() {
       }
       tracks.forEach(track => {
         track.audio.pause();
+        track.audio.currentTime = 0;
         track.audio.src = '';
       });
     };
   }, [tracks]);
   
-  // Автоматическое воспроизведение аудио по взаимодействию пользователя (необходимо для многих браузеров)
+  // Enable audio playback on user interaction (required for many browsers)
   useEffect(() => {
     const resumeAudio = () => {
       console.log('User interaction detected, resuming audio context if needed');
-      // Некоторые браузеры требуют взаимодействия пользователя для воспроизведения аудио
+      // Some browsers require user interaction to play audio
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       if (audioContext.state === 'suspended') {
         audioContext.resume();
       }
       
-      // После получения разрешения убираем слушатель
+      // Resume any paused tracks that should be playing
+      tracks.forEach(track => {
+        if (track.isPlaying && track.audio.paused) {
+          track.audio.play().catch(err => 
+            console.error('Error resuming audio:', err)
+          );
+        }
+      });
+      
+      // Remove event listeners after permission granted
       document.removeEventListener('click', resumeAudio);
       document.removeEventListener('touchstart', resumeAudio);
     };
@@ -173,14 +193,15 @@ export function useAudioSynchronizer() {
       document.removeEventListener('click', resumeAudio);
       document.removeEventListener('touchstart', resumeAudio);
     };
-  }, []);
+  }, [tracks]);
   
   return {
     tracks,
     addTrack,
     removeTrack,
-    startAll,
-    stopAll,
+    startAll,  // Keep for API compatibility
+    stopAll,   // Keep for API compatibility
+    setVolume,
     currentCycleTime: cycleTimeRef.current,
     isPlaying: tracks.some(track => track.isPlaying)
   };
