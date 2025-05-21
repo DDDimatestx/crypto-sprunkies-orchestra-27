@@ -15,17 +15,34 @@ export function useAudioSynchronizer() {
   const rafIdRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
   
-  // Add a new audio track for a character
+  // Добавим debug-логи для отслеживания проблем с аудио
   const addTrack = (character: Character) => {
-    if (tracks.some(track => track.character.id === character.id)) return;
+    console.log('Adding track for character:', character.name, 'with audio:', character.audioTrack);
+    
+    if (tracks.some(track => track.character.id === character.id)) {
+      console.log('Track already exists for this character, skipping');
+      return;
+    }
     
     const audio = new Audio(character.audioTrack);
     audio.loop = true;
     
+    // Добавим обработчики для отладки
+    audio.addEventListener('error', (e) => {
+      console.error('Audio error for', character.name, ':', e);
+    });
+    
+    audio.addEventListener('canplaythrough', () => {
+      console.log('Audio loaded and can play through for', character.name);
+    });
+    
     audio.addEventListener('loadedmetadata', () => {
-      // If this is the first track, set the loop length
-      if (tracks.length === 0) {
+      console.log('Audio metadata loaded for', character.name, 'duration:', audio.duration);
+      
+      // Если это первый трек, устанавливаем длину цикла
+      if (loopLengthRef.current === 0) {
         loopLengthRef.current = audio.duration;
+        console.log('Set loop length to', loopLengthRef.current);
       }
       
       setTracks(prev => [
@@ -33,17 +50,19 @@ export function useAudioSynchronizer() {
         { character, audio, isPlaying: false }
       ]);
       
-      // If we already have tracks playing, sync this one
+      // Если у нас уже есть воспроизводящиеся треки, синхронизируем этот
       if (tracks.some(t => t.isPlaying)) {
         const currentTime = (performance.now() - startTimeRef.current) / 1000 % loopLengthRef.current;
         audio.currentTime = currentTime;
-        audio.play();
+        audio.play().catch(err => console.error('Error playing audio:', err));
       }
     });
   };
   
-  // Remove a track
+  // Удаление трека
   const removeTrack = (characterId: string) => {
+    console.log('Removing track for character ID:', characterId);
+    
     setTracks(prev => {
       const newTracks = prev.filter(t => t.character.id !== characterId);
       const trackToRemove = prev.find(t => t.character.id === characterId);
@@ -57,36 +76,53 @@ export function useAudioSynchronizer() {
     });
   };
   
-  // Start all tracks in sync
+  // Запуск всех треков синхронно
   const startAll = () => {
-    if (!tracks.length) return;
+    console.log('Starting all tracks, count:', tracks.length);
     
-    // Reset cycle time and set start time reference
+    if (!tracks.length) {
+      console.warn('No tracks to play');
+      return;
+    }
+    
+    // Сбрасываем время цикла и устанавливаем ссылку на время начала
     cycleTimeRef.current = 0;
     startTimeRef.current = performance.now();
     
-    // Start all tracks from the beginning
-    tracks.forEach(track => {
+    // Запускаем все треки с начала
+    const playPromises = tracks.map(track => {
+      console.log('Starting track for', track.character.name);
       track.audio.currentTime = 0;
-      track.audio.play();
+      return track.audio.play().catch(err => {
+        console.error('Error playing', track.character.name, ':', err);
+      });
     });
     
-    // Update tracks state to reflect they are playing
+    // Обновляем состояние треков, чтобы отразить, что они воспроизводятся
     setTracks(prev => 
       prev.map(track => ({ ...track, isPlaying: true }))
     );
     
-    // Start animation frame for tracking cycle time
+    // Запускаем анимационный фрейм для отслеживания времени цикла
     const animate = (time: number) => {
       cycleTimeRef.current = (time - startTimeRef.current) / 1000 % loopLengthRef.current;
       rafIdRef.current = requestAnimationFrame(animate);
     };
     
     rafIdRef.current = requestAnimationFrame(animate);
+    
+    // Проверка статуса после запуска
+    Promise.all(playPromises).then(() => {
+      console.log('All tracks started successfully');
+    }).catch(err => {
+      console.error('Error starting tracks:', err);
+    });
   };
   
-  // Stop all tracks
+  // Остановка всех треков
   const stopAll = () => {
+    console.log('Stopping all tracks');
+    
     if (rafIdRef.current) {
       cancelAnimationFrame(rafIdRef.current);
       rafIdRef.current = null;
@@ -101,9 +137,10 @@ export function useAudioSynchronizer() {
     );
   };
   
-  // Clean up on unmount
+  // Очистка при размонтировании
   useEffect(() => {
     return () => {
+      console.log('Cleaning up audio synchronizer');
       if (rafIdRef.current) {
         cancelAnimationFrame(rafIdRef.current);
       }
@@ -113,6 +150,30 @@ export function useAudioSynchronizer() {
       });
     };
   }, [tracks]);
+  
+  // Автоматическое воспроизведение аудио по взаимодействию пользователя (необходимо для многих браузеров)
+  useEffect(() => {
+    const resumeAudio = () => {
+      console.log('User interaction detected, resuming audio context if needed');
+      // Некоторые браузеры требуют взаимодействия пользователя для воспроизведения аудио
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      
+      // После получения разрешения убираем слушатель
+      document.removeEventListener('click', resumeAudio);
+      document.removeEventListener('touchstart', resumeAudio);
+    };
+    
+    document.addEventListener('click', resumeAudio);
+    document.addEventListener('touchstart', resumeAudio);
+    
+    return () => {
+      document.removeEventListener('click', resumeAudio);
+      document.removeEventListener('touchstart', resumeAudio);
+    };
+  }, []);
   
   return {
     tracks,

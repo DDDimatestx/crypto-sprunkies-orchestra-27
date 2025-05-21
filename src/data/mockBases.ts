@@ -11,13 +11,13 @@ export const mockBases: Base[] = [
         id: 'char-1',
         name: 'Bitcoin Drummer',
         image: '/characters/base-1/character-1.gif',
-        audioTrack: '/audio/base-1/drum.mp3',
+        audioTrack: '/audio/base-1/drums.mp3', // Обновленный путь к файлу drums.mp3
       },
       {
         id: 'char-2',
         name: 'Ethereum Synth',
         image: '/characters/base-1/character-2.gif',
-        audioTrack: '/audio/base-1/synth.mp3',
+        audioTrack: '/audio/base-1/synth.mp3', // Обновленный путь к файлу synth.mp3
       },
       {
         id: 'char-3',
