@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Character, Base } from '../types';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,8 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
   const [volume, setVolume] = useState([0.7]); // Default volume at 70%
   const { 
     addTrack, 
-    removeTrack
+    removeTrack,
+    setVolume: setAudioVolume
   } = useAudioSynchronizer();
   
   // Set up the placeholders for the main game area - keep at 4
@@ -27,15 +29,12 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
 
   // Apply volume changes to all audio elements
   useEffect(() => {
-    const audioElements = document.querySelectorAll('audio');
-    audioElements.forEach((audio) => {
-      audio.volume = volume[0];
-    });
-  }, [volume]);
+    setAudioVolume(volume[0]);
+  }, [volume, setAudioVolume]);
 
   const handleAddCharacter = (character: Character) => {
     if (activeCharacters.length >= 4) {
-      toast("Maximum characters reached! Remove some before adding more.");
+      toast.warning("Maximum characters reached! Remove some before adding more.");
       return;
     }
     
@@ -51,15 +50,22 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
       position: emptyPositions[0]
     };
     
+    // Start playing this character's audio and add to active characters
+    addTrack(character);
     setActiveCharacters(prev => [...prev, characterWithPosition]);
     
-    // Start playing this character's audio immediately when added
-    addTrack(character);
+    console.log(`Added character: ${character.name} with audio: ${character.audioTrack}`);
+    toast.success(`Added ${character.name}`);
   };
 
   const handleRemoveCharacter = (characterId: string) => {
-    setActiveCharacters(prev => prev.filter(c => c.id !== characterId));
-    removeTrack(characterId);
+    const characterToRemove = activeCharacters.find(c => c.id === characterId);
+    if (characterToRemove) {
+      console.log(`Removing character: ${characterToRemove.name}`);
+      removeTrack(characterId);
+      setActiveCharacters(prev => prev.filter(c => c.id !== characterId));
+      toast.info(`Removed ${characterToRemove.name}`);
+    }
   };
 
   // Clean up audio on component unmount
@@ -91,7 +97,10 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
           <Slider
             className="w-full"
             value={volume}
-            onValueChange={setVolume}
+            onValueChange={(val) => {
+              setVolume(val);
+              console.log('Volume changed to:', val[0]);
+            }}
             max={1}
             step={0.01}
           />
@@ -110,7 +119,7 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
               <div 
                 key={placeholder.id}
                 className={`h-80 w-60 rounded-lg overflow-hidden flex items-center justify-center ${
-                  character ? 'cursor-pointer' : 'bg-black/20 border border-white/20'
+                  character ? 'cursor-pointer transform hover:scale-105 transition-transform' : 'bg-black/20 border border-white/20'
                 }`}
                 onClick={() => character && handleRemoveCharacter(character.id)}
               >
