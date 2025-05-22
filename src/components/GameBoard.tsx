@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Character, Base } from '../types';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,8 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
   const { 
     addTrack, 
     removeTrack,
-    setVolume: setAudioVolume
+    setVolume: setAudioVolume,
+    tracks
   } = useAudioSynchronizer();
   
   // Set up the placeholders for the main game area - keep at 4
@@ -50,8 +50,11 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
       position: emptyPositions[0]
     };
     
-    // Start playing this character's audio and add to active characters
+    // Start playing this character's audio
+    console.log(`Starting audio for ${character.name} with track ${character.audioTrack}`);
     addTrack(character);
+    
+    // Add to active characters
     setActiveCharacters(prev => [...prev, characterWithPosition]);
     
     console.log(`Added character: ${character.name} with audio: ${character.audioTrack}`);
@@ -62,11 +65,20 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
     const characterToRemove = activeCharacters.find(c => c.id === characterId);
     if (characterToRemove) {
       console.log(`Removing character: ${characterToRemove.name}`);
+      
+      // Stop just this character's audio
       removeTrack(characterId);
+      
       setActiveCharacters(prev => prev.filter(c => c.id !== characterId));
       toast.info(`Removed ${characterToRemove.name}`);
     }
   };
+
+  // Debug info
+  useEffect(() => {
+    console.log('Current active tracks:', tracks.length);
+    console.log('Current active characters:', activeCharacters.length);
+  }, [tracks, activeCharacters]);
 
   // Clean up audio on component unmount
   useEffect(() => {

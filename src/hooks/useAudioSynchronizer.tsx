@@ -50,16 +50,18 @@ export function useAudioSynchronizer() {
   // Helper function to play audio with proper error handling
   const playAudio = async (audio: HTMLAudioElement): Promise<void> => {
     try {
-      // Make sure audio is properly loaded before playing
       if (audio.readyState < 2) { // HAVE_CURRENT_DATA (2) or higher needed
         return new Promise((resolve, reject) => {
-          audio.addEventListener('canplaythrough', () => {
+          const loadHandler = () => {
             audio.play()
               .then(resolve)
               .catch(reject);
-          }, { once: true });
+          };
+          
+          audio.addEventListener('canplaythrough', loadHandler, { once: true });
           
           audio.addEventListener('error', (e) => {
+            console.error(`Audio loading error in playAudio:`, e);
             reject(new Error(`Audio loading error: ${e.type}`));
           }, { once: true });
           
@@ -81,33 +83,39 @@ export function useAudioSynchronizer() {
   const addTrack = (character: Character) => {
     console.log('Adding track for character:', character.name, 'with audio:', character.audioTrack);
     
-    // Check if track already exists
+    // Check if track already exists for this character
     if (tracks.some(track => track.character.id === character.id)) {
       console.log('Track already exists for this character, skipping');
       return;
     }
     
-    // Create new audio element
+    // Create new audio element specifically for this character
     const audio = new Audio();
     audio.src = character.audioTrack;
     audio.loop = true;
     audio.preload = 'auto';
+    audio.volume = 0.7; // Default volume
     
-    // Add event listeners for debugging
+    // Add track to state immediately (but don't play yet)
+    const newTrack: AudioTrack = { character, audio, isPlaying: false };
+    setTracks(prev => [...prev, newTrack]);
+    
+    // Set up event listeners for debugging
     audio.addEventListener('canplaythrough', () => {
-      console.log('Audio loaded and ready to play for', character.name);
+      console.log('Audio loaded and ready to play for:', character.name);
+      setTracks(prev => 
+        prev.map(t => 
+          t.character.id === character.id 
+            ? { ...t, isPlaying: true } 
+            : t
+        )
+      );
       
-      // Add track to state WITHOUT stopping other tracks
-      const newTrack = { character, audio, isPlaying: true };
-      setTracks(prev => [...prev, newTrack]);
-      
-      // Start playing this track independently
+      // Play this audio without affecting other tracks
       playAudio(audio)
-        .then(() => {
-          console.log('Started playing audio for', character.name);
-        })
+        .then(() => console.log('Started playing audio for:', character.name))
         .catch(err => {
-          console.error('Error playing audio for', character.name, ':', err);
+          console.error('Error playing audio for:', character.name, err);
           toast.error(`Failed to play audio for ${character.name}`);
         });
     }, { once: true });
@@ -115,12 +123,12 @@ export function useAudioSynchronizer() {
     audio.addEventListener('error', (e) => {
       console.error(`Audio error for ${character.name}:`, e);
       toast.error(`Audio error for ${character.name}`);
+      
+      // Remove this track from state if it errors
+      setTracks(prev => prev.filter(t => t.character.id !== character.id));
     });
     
-    // Set volume before loading
-    audio.volume = 0.7; // Default volume
-    
-    // Force load the audio
+    // Start loading the audio
     audio.load();
   };
   
@@ -130,19 +138,19 @@ export function useAudioSynchronizer() {
     
     const trackToRemove = tracks.find(t => t.character.id === characterId);
     if (trackToRemove) {
-      // Pause and reset the audio before removing
       try {
+        // Just pause and clean up this specific audio element
         trackToRemove.audio.pause();
         trackToRemove.audio.currentTime = 0;
         trackToRemove.audio.src = '';
-        console.log('Stopped audio for', trackToRemove.character.name);
+        console.log('Stopped audio for:', trackToRemove.character.name);
       } catch (error) {
         console.error('Error stopping audio:', error);
       }
+      
+      // Only remove this specific track from state, keeping others intact
+      setTracks(prev => prev.filter(t => t.character.id !== characterId));
     }
-    
-    // Remove only this specific track, keep others playing
-    setTracks(prev => prev.filter(t => t.character.id !== characterId));
   };
   
   // Set volume for all audio tracks
@@ -159,7 +167,7 @@ export function useAudioSynchronizer() {
   // Clean up when component unmounts
   useEffect(() => {
     return () => {
-      console.log('Cleaning up audio synchronizer');
+      console.log('Cleaning up audio synchronizer, stopping all tracks');
       tracks.forEach(track => {
         try {
           track.audio.pause();
