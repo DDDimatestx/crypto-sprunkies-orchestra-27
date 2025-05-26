@@ -11,7 +11,7 @@ interface UseAudioProps {
 export function useAudio({
   src,
   loop = true,
-  autoPlay = true,
+  autoPlay = false,
   volume = 1,
 }: UseAudioProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
