@@ -23,24 +23,24 @@ export const mockBases: Base[] = [
         id: 'char-3',
         name: 'Dogecoin Bass',
         image: '/characters/base-1/character-3.gif',
-        audioTrack: '/audio/base-1/drums.mp3', // Using drums as fallback
+        audioTrack: '/audio/base-1/drums.mp3',
       },
       {
         id: 'char-4',
         name: 'NFT Vocal',
-        image: '/characters/base-1/character-4.gif',
-        audioTrack: '/audio/base-1/synth.mp3', // Using synth as fallback
+        image: '/characters/base-1/character-1.gif',
+        audioTrack: '/audio/base-1/synth.mp3',
       },
       {
         id: 'char-5',
         name: 'Solana Beat',
-        image: '/characters/base-1/character-1.gif',
+        image: '/characters/base-1/character-2.gif',
         audioTrack: '/audio/base-1/drums.mp3',
       },
       {
         id: 'char-6',
         name: 'Cardano Melody',
-        image: '/characters/base-1/character-2.gif',
+        image: '/characters/base-1/character-3.gif',
         audioTrack: '/audio/base-1/synth.mp3',
       },
     ],
@@ -48,43 +48,43 @@ export const mockBases: Base[] = [
   {
     id: 'base-2',
     name: 'Blockchain Lounge',
-    background: '/backgrounds/base-2-bg.jpg',
+    background: '/backgrounds/base-1-bg.jpg',
     characters: [
       {
         id: 'char-7',
         name: 'Smart Contract Keys',
-        image: '/characters/base-2/character-1.gif',
-        audioTrack: '/audio/base-1/drums.mp3', // Using base-1 audio
+        image: '/characters/base-1/character-1.gif',
+        audioTrack: '/audio/base-1/drums.mp3',
       },
       {
         id: 'char-8',
         name: 'Gas Fee Guitar',
-        image: '/characters/base-2/character-2.gif',
-        audioTrack: '/audio/base-1/synth.mp3', // Using base-1 audio
+        image: '/characters/base-1/character-2.gif',
+        audioTrack: '/audio/base-1/synth.mp3',
       },
       {
         id: 'char-9',
         name: 'Altcoin Sax',
-        image: '/characters/base-2/character-3.gif',
-        audioTrack: '/audio/base-1/drums.mp3', // Using base-1 audio
+        image: '/characters/base-1/character-3.gif',
+        audioTrack: '/audio/base-1/drums.mp3',
       },
       {
         id: 'char-10',
         name: 'Whale Trumpet',
-        image: '/characters/base-2/character-4.gif',
-        audioTrack: '/audio/base-1/synth.mp3', // Using base-1 audio
+        image: '/characters/base-1/character-1.gif',
+        audioTrack: '/audio/base-1/synth.mp3',
       },
       {
         id: 'char-11',
         name: 'NFT Drums',
-        image: '/characters/base-2/character-1.gif',
-        audioTrack: '/audio/base-1/drums.mp3', // Using base-1 audio
+        image: '/characters/base-1/character-2.gif',
+        audioTrack: '/audio/base-1/drums.mp3',
       },
       {
         id: 'char-12',
         name: 'Token Violin',
-        image: '/characters/base-2/character-2.gif',
-        audioTrack: '/audio/base-1/synth.mp3', // Using base-1 audio
+        image: '/characters/base-1/character-3.gif',
+        audioTrack: '/audio/base-1/synth.mp3',
       },
     ],
   },

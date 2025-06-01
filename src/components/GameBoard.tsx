@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Character, Base } from '../types';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ interface GameBoardProps {
 
 const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
   const [activeCharacters, setActiveCharacters] = useState<Character[]>([]);
-  const [volume, setVolume] = useState([0.7]); // Default volume at 70%
+  const [volume, setVolume] = useState([0.7]);
   const { 
     addTrack, 
     removeTrack,
@@ -21,24 +22,29 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
     tracks
   } = useAudioSynchronizer();
   
-  // Set up the placeholders for the main game area - keep at 4
   const placeholders = Array(4).fill(null).map((_, index) => ({
     id: `placeholder-${index}`,
     position: index
   }));
 
-  // Apply volume changes to all audio elements
   useEffect(() => {
     setAudioVolume(volume[0]);
   }, [volume, setAudioVolume]);
 
-  const handleAddCharacter = (character: Character) => {
+  const handleAddCharacter = async (character: Character) => {
+    console.log('Adding character:', character.name);
+    
     if (activeCharacters.length >= 4) {
       toast.warning("Maximum characters reached! Remove some before adding more.");
       return;
     }
     
-    // Find first empty position
+    // Check if character already active
+    if (activeCharacters.some(c => c.id === character.id)) {
+      toast.info(`${character.name} is already active`);
+      return;
+    }
+    
     const emptyPositions = placeholders
       .filter(p => !activeCharacters.find(c => c.position === p.position))
       .map(p => p.position);
@@ -50,14 +56,12 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
       position: emptyPositions[0]
     };
     
-    // Start playing this character's audio
-    console.log(`Starting audio for ${character.name} with track ${character.audioTrack}`);
-    addTrack(character);
-    
-    // Add to active characters
+    // Add to active characters first
     setActiveCharacters(prev => [...prev, characterWithPosition]);
     
-    console.log(`Added character: ${character.name} with audio: ${character.audioTrack}`);
+    // Then start audio
+    await addTrack(character);
+    
     toast.success(`Added ${character.name}`);
   };
 
@@ -66,32 +70,25 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
     if (characterToRemove) {
       console.log(`Removing character: ${characterToRemove.name}`);
       
-      // Stop just this character's audio
+      // Remove from active characters
+      setActiveCharacters(prev => prev.filter(c => c.id !== characterId));
+      
+      // Stop audio
       removeTrack(characterId);
       
-      setActiveCharacters(prev => prev.filter(c => c.id !== characterId));
       toast.info(`Removed ${characterToRemove.name}`);
     }
   };
 
-  // Debug info
+  // Debug logging
   useEffect(() => {
-    console.log('Current active tracks:', tracks.length);
-    console.log('Current active characters:', activeCharacters.length);
-  }, [tracks, activeCharacters]);
-
-  // Clean up audio on component unmount
-  useEffect(() => {
-    return () => {
-      activeCharacters.forEach(character => {
-        removeTrack(character.id);
-      });
-    };
-  }, []);
+    console.log('Active characters:', activeCharacters.length);
+    console.log('Active tracks:', tracks.length);
+  }, [activeCharacters, tracks]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-purple-900 to-indigo-800">
-      {/* Header with back button and volume control */}
+      {/* Header */}
       <div className="bg-black/30 backdrop-blur-md p-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
           <Button 
@@ -109,10 +106,7 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
           <Slider
             className="w-full"
             value={volume}
-            onValueChange={(val) => {
-              setVolume(val);
-              console.log('Volume changed to:', val[0]);
-            }}
+            onValueChange={setVolume}
             max={1}
             step={0.01}
           />
@@ -157,7 +151,7 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
         </div>
       </div>
 
-      {/* Character selection area - now showing 6 characters */}
+      {/* Character selection */}
       <div className="bg-black/50 backdrop-blur-md p-4">
         <h2 className="text-xl font-bold text-white mb-3 text-center">Available Characters</h2>
         <div className="flex justify-center flex-wrap gap-3 max-w-5xl mx-auto">
