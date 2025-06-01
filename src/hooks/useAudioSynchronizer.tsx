@@ -3,31 +3,16 @@ import { useEffect, useRef, useState } from 'react';
 import { Character } from '../types';
 import { toast } from '@/components/ui/sonner';
 
-interface AudioTrack {
-  character: Character;
-  audio: HTMLAudioElement;
-  isPlaying: boolean;
-}
-
 export function useAudioSynchronizer() {
   const [audioMap, setAudioMap] = useState<Map<string, HTMLAudioElement>>(new Map());
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize audio context on first user interaction
-  useEffect(() => {
-    const initAudio = () => {
-      if (isInitialized) return;
-      console.log('Audio system initialized by user interaction');
-      setIsInitialized(true);
-    };
-    
-    const events = ['click', 'touchstart', 'keydown'];
-    events.forEach(event => document.addEventListener(event, initAudio, { once: true }));
-    
-    return () => {
-      events.forEach(event => document.removeEventListener(event, initAudio));
-    };
-  }, [isInitialized]);
+  // Manual initialization function
+  const initializeAudio = () => {
+    console.log('Audio system manually initialized');
+    setIsInitialized(true);
+    toast.success('Audio system ready!');
+  };
 
   const addTrack = async (character: Character) => {
     console.log('Adding track for character:', character.name, 'with audio:', character.audioTrack);
@@ -50,7 +35,7 @@ export function useAudioSynchronizer() {
       
       // Set up event listeners BEFORE setting src
       audio.addEventListener('loadeddata', async () => {
-        console.log('Audio loaded for:', character.name);
+        console.log('Audio loaded successfully for:', character.name);
         try {
           const playPromise = audio.play();
           if (playPromise !== undefined) {
@@ -73,9 +58,28 @@ export function useAudioSynchronizer() {
       audio.addEventListener('error', (e) => {
         console.error(`Audio loading error for ${character.name}:`, e);
         console.error('Audio error details:', audio.error);
-        const errorMessage = audio.error ? 
-          `Code: ${audio.error.code}, Message: ${audio.error.message || 'Unknown error'}` : 
-          'Unknown audio error';
+        console.error('Attempted to load:', character.audioTrack);
+        
+        let errorMessage = 'Unknown audio error';
+        if (audio.error) {
+          switch (audio.error.code) {
+            case 1:
+              errorMessage = 'Loading aborted';
+              break;
+            case 2:
+              errorMessage = 'Network error';
+              break;
+            case 3:
+              errorMessage = 'Decode error';
+              break;
+            case 4:
+              errorMessage = 'Audio format not supported';
+              break;
+            default:
+              errorMessage = `Error code: ${audio.error.code}`;
+          }
+        }
+        
         toast.error(`Audio error for ${character.name}: ${errorMessage}`);
         
         // Remove from map on error
@@ -175,6 +179,7 @@ export function useAudioSynchronizer() {
     removeTrack,
     setVolume,
     isPlaying: tracks.some(track => track.isPlaying),
-    isInitialized
+    isInitialized,
+    initializeAudio
   };
 }

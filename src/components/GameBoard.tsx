@@ -20,7 +20,8 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
     removeTrack,
     setVolume: setAudioVolume,
     tracks,
-    isInitialized
+    isInitialized,
+    initializeAudio
   } = useAudioSynchronizer();
   
   const placeholders = Array(4).fill(null).map((_, index) => ({
@@ -31,12 +32,6 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
   useEffect(() => {
     setAudioVolume(volume[0]);
   }, [volume, setAudioVolume]);
-
-  const handleInitializeAudio = () => {
-    // This will trigger user interaction and allow audio to play
-    console.log('Audio system manually initialized');
-    toast.success('Audio system ready!');
-  };
 
   const handleAddCharacter = async (character: Character) => {
     console.log('Adding character:', character.name);
@@ -110,7 +105,7 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
           
           {!isInitialized && (
             <Button 
-              onClick={handleInitializeAudio}
+              onClick={initializeAudio}
               className="bg-green-600 hover:bg-green-700 text-white"
             >
               <Play className="w-4 h-4 mr-2" />
