@@ -17,7 +17,7 @@ export function useAudioSynchronizer() {
   useEffect(() => {
     const initAudio = () => {
       if (isInitialized) return;
-      console.log('Audio system initialized');
+      console.log('Audio system initialized by user interaction');
       setIsInitialized(true);
     };
     
@@ -37,6 +37,12 @@ export function useAudioSynchronizer() {
       console.log('Track already exists for this character, skipping');
       return;
     }
+
+    // Check if user has interacted with page
+    if (!isInitialized) {
+      toast.error('Please click anywhere on the page first to enable audio');
+      return;
+    }
     
     try {
       // Create new audio element for this character
@@ -50,20 +56,31 @@ export function useAudioSynchronizer() {
       setAudioMap(prev => new Map(prev.set(character.id, audio)));
       
       // Set up event listeners
-      audio.addEventListener('canplaythrough', async () => {
+      audio.addEventListener('loadeddata', async () => {
         console.log('Audio loaded for:', character.name);
         try {
-          await audio.play();
-          console.log('Started playing audio for:', character.name);
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            await playPromise;
+            console.log('Successfully started playing audio for:', character.name);
+            toast.success(`Playing ${character.name}`);
+          }
         } catch (error) {
           console.error('Error playing audio for:', character.name, error);
-          toast.error(`Failed to play audio for ${character.name}`);
+          toast.error(`Failed to play audio for ${character.name}. ${error.message}`);
+          // Remove from map on play error
+          setAudioMap(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(character.id);
+            return newMap;
+          });
         }
-      }, { once: true });
+      });
       
       audio.addEventListener('error', (e) => {
-        console.error(`Audio error for ${character.name}:`, e);
-        toast.error(`Audio error for ${character.name}`);
+        console.error(`Audio loading error for ${character.name}:`, e);
+        console.error('Audio error details:', audio.error);
+        toast.error(`Audio loading error for ${character.name}: ${audio.error?.message || 'Unknown error'}`);
         // Remove from map on error
         setAudioMap(prev => {
           const newMap = new Map(prev);
@@ -71,13 +88,18 @@ export function useAudioSynchronizer() {
           return newMap;
         });
       });
+
+      audio.addEventListener('canplay', () => {
+        console.log('Audio can start playing for:', character.name);
+      });
       
       // Load the audio
+      console.log('Loading audio file:', character.audioTrack);
       audio.load();
       
     } catch (error) {
       console.error('Error creating audio for:', character.name, error);
-      toast.error(`Error creating audio for ${character.name}`);
+      toast.error(`Error creating audio for ${character.name}: ${error.message}`);
     }
   };
   
@@ -108,6 +130,7 @@ export function useAudioSynchronizer() {
     audioMap.forEach((audio, characterId) => {
       try {
         audio.volume = volume;
+        console.log(`Set volume to ${volume} for character ${characterId}`);
       } catch (error) {
         console.error('Error setting volume for character:', characterId, error);
       }
@@ -142,6 +165,7 @@ export function useAudioSynchronizer() {
     addTrack,
     removeTrack,
     setVolume,
-    isPlaying: tracks.some(track => track.isPlaying)
+    isPlaying: tracks.some(track => track.isPlaying),
+    isInitialized
   };
 }

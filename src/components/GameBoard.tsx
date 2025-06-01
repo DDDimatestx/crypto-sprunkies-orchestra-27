@@ -4,7 +4,7 @@ import { Character, Base } from '../types';
 import { Button } from '@/components/ui/button';
 import { useAudioSynchronizer } from '../hooks/useAudioSynchronizer';
 import { toast } from '@/components/ui/sonner';
-import { Mic, Volume2 } from 'lucide-react';
+import { Mic, Volume2, Play } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
 interface GameBoardProps {
@@ -19,7 +19,8 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
     addTrack, 
     removeTrack,
     setVolume: setAudioVolume,
-    tracks
+    tracks,
+    isInitialized
   } = useAudioSynchronizer();
   
   const placeholders = Array(4).fill(null).map((_, index) => ({
@@ -30,6 +31,12 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
   useEffect(() => {
     setAudioVolume(volume[0]);
   }, [volume, setAudioVolume]);
+
+  const handleInitializeAudio = () => {
+    // This will trigger user interaction and allow audio to play
+    console.log('Audio system manually initialized');
+    toast.success('Audio system ready!');
+  };
 
   const handleAddCharacter = async (character: Character) => {
     console.log('Adding character:', character.name);
@@ -84,7 +91,8 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
   useEffect(() => {
     console.log('Active characters:', activeCharacters.length);
     console.log('Active tracks:', tracks.length);
-  }, [activeCharacters, tracks]);
+    console.log('Audio initialized:', isInitialized);
+  }, [activeCharacters, tracks, isInitialized]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-purple-900 to-indigo-800">
@@ -99,6 +107,16 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
             ← Back to Menu
           </Button>
           <h1 className="text-2xl font-bold text-white">{base.name}</h1>
+          
+          {!isInitialized && (
+            <Button 
+              onClick={handleInitializeAudio}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Enable Audio
+            </Button>
+          )}
         </div>
         
         <div className="flex items-center gap-3 w-48">
@@ -112,6 +130,13 @@ const GameBoard = ({ base, onBackToMenu }: GameBoardProps) => {
           />
         </div>
       </div>
+
+      {/* Audio status warning */}
+      {!isInitialized && (
+        <div className="bg-yellow-500/80 text-black p-2 text-center">
+          Click "Enable Audio" button to allow sound playback
+        </div>
+      )}
 
       {/* Main game area */}
       <div 
