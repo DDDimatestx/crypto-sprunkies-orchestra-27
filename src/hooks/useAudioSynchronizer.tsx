@@ -40,22 +40,15 @@ export function useAudioSynchronizer() {
 
     // Check if user has interacted with page
     if (!isInitialized) {
-      toast.error('Please click anywhere on the page first to enable audio');
+      toast.error('Please click "Enable Audio" button first to allow sound playback');
       return;
     }
     
     try {
       // Create new audio element for this character
       const audio = new Audio();
-      audio.src = character.audioTrack;
-      audio.loop = true;
-      audio.volume = 0.7;
-      audio.preload = 'auto';
       
-      // Add to map immediately
-      setAudioMap(prev => new Map(prev.set(character.id, audio)));
-      
-      // Set up event listeners
+      // Set up event listeners BEFORE setting src
       audio.addEventListener('loadeddata', async () => {
         console.log('Audio loaded for:', character.name);
         try {
@@ -67,7 +60,7 @@ export function useAudioSynchronizer() {
           }
         } catch (error) {
           console.error('Error playing audio for:', character.name, error);
-          toast.error(`Failed to play audio for ${character.name}. ${error.message}`);
+          toast.error(`Failed to play audio for ${character.name}`);
           // Remove from map on play error
           setAudioMap(prev => {
             const newMap = new Map(prev);
@@ -80,7 +73,11 @@ export function useAudioSynchronizer() {
       audio.addEventListener('error', (e) => {
         console.error(`Audio loading error for ${character.name}:`, e);
         console.error('Audio error details:', audio.error);
-        toast.error(`Audio loading error for ${character.name}: ${audio.error?.message || 'Unknown error'}`);
+        const errorMessage = audio.error ? 
+          `Code: ${audio.error.code}, Message: ${audio.error.message || 'Unknown error'}` : 
+          'Unknown audio error';
+        toast.error(`Audio error for ${character.name}: ${errorMessage}`);
+        
         // Remove from map on error
         setAudioMap(prev => {
           const newMap = new Map(prev);
@@ -93,8 +90,20 @@ export function useAudioSynchronizer() {
         console.log('Audio can start playing for:', character.name);
       });
       
+      // Configure audio properties
+      audio.loop = true;
+      audio.volume = 0.7;
+      audio.preload = 'auto';
+      
+      // Set src AFTER event listeners are attached
+      console.log('Setting audio source:', character.audioTrack);
+      audio.src = character.audioTrack;
+      
+      // Add to map immediately after setting src
+      setAudioMap(prev => new Map(prev.set(character.id, audio)));
+      
       // Load the audio
-      console.log('Loading audio file:', character.audioTrack);
+      console.log('Loading audio file...');
       audio.load();
       
     } catch (error) {
