@@ -23,7 +23,7 @@ export const mockBases: Base[] = [
         id: 'char-3',
         name: 'Dogecoin Bass',
         image: '/characters/base-1/character-3.gif',
-        audioTrack: '/audio/base-1/drums.mp3',
+        audioTrack: '/audio/base-1/drums2.mp3',
       },
       {
         id: 'char-4',
@@ -35,7 +35,7 @@ export const mockBases: Base[] = [
         id: 'char-5',
         name: 'Solana Beat',
         image: '/characters/base-1/character-2.gif',
-        audioTrack: '/audio/base-1/drums.mp3',
+        audioTrack: '/audio/base-1/synth2.mp3',
       },
       {
         id: 'char-6',
